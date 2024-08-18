@@ -3,7 +3,9 @@
 #include <cmath>
 
 struct Coordinates {
+    // широта
     double lat;
+    // долгота
     double lng;
     bool operator==(const Coordinates& other) const {
         return lat == other.lat && lng == other.lng;

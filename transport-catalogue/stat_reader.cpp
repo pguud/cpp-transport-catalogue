@@ -1,1 +1,38 @@
-// место для вашего кода
+#include <iostream>
+
+#include "stat_reader.h"
+
+void ParseAndPrintStat(const TransportCatalogue::TransportCatalogue& tansport_catalogue, std::string_view request,
+                        std::ostream& output) {
+	
+	string_view command = request.substr(0, request.find(' '));
+	string_view id = request.substr(request.find(' ') + 1, request.size());
+	
+	if (command == "Bus"s) {
+		if (tansport_catalogue.GetInfoBus(string(id)).has_value()) {
+			const TransportCatalogue::StatBus s = tansport_catalogue.GetInfoBus(string(id)).value();
+			output << command << " "s << id << ": "s << s.stops_on_route << " stops on route, "s << s.unique_stops << " unique stops, "s
+			<< s.route_length << " route length"s << endl;
+		} else {
+			output << command << " "s << id << ": "s << "not found" << endl;
+		}
+	} else if (command == "Stop"s) {
+		output << command << " "s << id << ": "s;
+
+		if (tansport_catalogue.GetInfoStop(string(id)).has_value()) {
+			set<string> StatStop = tansport_catalogue.GetInfoStop(string(id)).value();
+			if (!StatStop.empty()) {
+				output << "buses"s;
+				for (const string& s : StatStop) {
+					output << " "s << s; 
+				}
+				output << endl;
+			} else {
+				output << "no buses"s << endl;
+			}
+			
+		} else {
+			output << "not found"s << endl;
+		}
+	}
+}
