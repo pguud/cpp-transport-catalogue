@@ -20,17 +20,13 @@ namespace TransportCatalogue {
     }
 
     const Bus* TransportCatalogue::FindBus(const string& bus_name) const {
-        if (!busname_to_bus_.count(bus_name)) {
-            return nullptr;
-        }
-        return busname_to_bus_.at(bus_name);
+        auto find_bus = busname_to_bus_.find(bus_name);
+        return find_bus == busname_to_bus_.end() ? nullptr : find_bus->second;
     }
 
     const Stop* TransportCatalogue::FindStop(const string& stop_name) const {
-        if (!stopname_to_stops_.count(stop_name)) {
-            return nullptr;
-        }
-        return stopname_to_stops_.at(stop_name);
+        auto find_stop = stopname_to_stops_.find(stop_name);
+        return find_stop == stopname_to_stops_.end() ? nullptr : find_stop->second;
     }
 
     // Bus X: R stops on route, U unique stops, L route length 
@@ -58,11 +54,15 @@ namespace TransportCatalogue {
     }
 
     // Stop X: buses bus1 bus2 ... busN 
-    const optional<set<string>> TransportCatalogue::GetInfoStop(const string& stop_name) const {
+    const set<string>* TransportCatalogue::GetInfoStop(const string& stop_name) const {
+        /*
         if (!stop_to_buses_.count(stop_name)) {
             return nullopt;
         }
-        return stop_to_buses_.at(stop_name);
+        return &stop_to_buses_.at(stop_name);
+        */
+       auto info_stop = stop_to_buses_.find(stop_name);
+       return info_stop == stop_to_buses_.end() ? nullptr : &info_stop->second;
     }
 }
 

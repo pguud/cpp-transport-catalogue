@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iterator>
+#include <iostream>
 
 /**
  * Парсит строку вида "10.123,  -30.1837" и возвращает пару координат (широта, долгота)
@@ -129,4 +130,19 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue::TransportCa
             catalogue.AddBus(bus);
         }
     }
+}
+
+void ParseBaseRequest(TransportCatalogue::TransportCatalogue& catalogue, std::istream& input) {
+    int base_request_count;
+    // cin >> base_request_count >> ws;
+    input >> base_request_count >> std::ws;
+
+    InputReader reader;
+    for (int i = 0; i < base_request_count; ++i) {
+        string line;
+        // getline(cin, line);
+        getline(input, line);
+        reader.ParseLine(line);
+    }
+    reader.ApplyCommands(catalogue);
 }

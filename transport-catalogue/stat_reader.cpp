@@ -2,6 +2,19 @@
 
 #include "stat_reader.h"
 
+void ParseRequest(TransportCatalogue::TransportCatalogue& catalogue, std::istream& input) {
+	int stat_request_count;
+    // cin >> stat_request_count >> ws;
+    input >> stat_request_count >> ws;
+
+    for (int i = 0; i < stat_request_count; ++i) {
+        string line;
+        // getline(cin, line);
+        getline(input, line);
+        ParseAndPrintStat(catalogue, line, cout);
+    }
+}
+
 void ParseAndPrintStat(const TransportCatalogue::TransportCatalogue& tansport_catalogue, std::string_view request,
                         std::ostream& output) {
 	
@@ -19,8 +32,8 @@ void ParseAndPrintStat(const TransportCatalogue::TransportCatalogue& tansport_ca
 	} else if (command == "Stop"s) {
 		output << command << " "s << id << ": "s;
 
-		if (tansport_catalogue.GetInfoStop(string(id)).has_value()) {
-			set<string> StatStop = tansport_catalogue.GetInfoStop(string(id)).value();
+		if (tansport_catalogue.GetInfoStop(string(id)) != nullptr) {
+			set<string> StatStop = *tansport_catalogue.GetInfoStop(string(id));
 			if (!StatStop.empty()) {
 				output << "buses"s;
 				for (const string& s : StatStop) {

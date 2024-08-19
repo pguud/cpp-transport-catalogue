@@ -44,7 +44,7 @@ namespace TransportCatalogue {
 		const optional<StatBus> GetInfoBus(const string& bus_name) const;
 
 		// Stop X: buses bus1 bus2 ... busN 
-		const optional<set<string>> GetInfoStop(const string& stop_name) const;
+		const set<string>* GetInfoStop(const string& stop_name) const;
 
 	private:
 		//  дек остановок

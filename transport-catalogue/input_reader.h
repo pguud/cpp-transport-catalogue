@@ -36,3 +36,5 @@ public:
 private:
     std::vector<CommandDescription> commands_;
 };
+
+void ParseBaseRequest(TransportCatalogue::TransportCatalogue& catalogue, std::istream& input);
