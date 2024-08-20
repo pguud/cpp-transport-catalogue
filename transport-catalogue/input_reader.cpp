@@ -5,6 +5,8 @@
 #include <iterator>
 #include <iostream>
 
+using namespace std;
+
 /**
  * Парсит строку вида "10.123,  -30.1837" и возвращает пару координат (широта, долгота)
  */

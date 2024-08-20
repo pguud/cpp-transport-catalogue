@@ -9,18 +9,16 @@
 
 #include "geo.h"
 
-using namespace std;
-
 namespace TransportCatalogue {
 	struct Stop {
-		string name;
+		std::string name;
 		Coordinates coordinates;
 	};
 
 	struct Bus {
-		string name;
+		std::string name;
 		// вектор остановок
-		vector<const Stop*> bus;
+		std::vector<const Stop*> bus;
 	};
 
 	// Bus X: R stops on route, U unique stops, L route length 
@@ -37,26 +35,26 @@ namespace TransportCatalogue {
 		void AddBus(const Bus& bus);
 		void AddStop(const Stop& stop);
 
-		const Bus* FindBus(const string& bus_name) const;
-		const Stop* FindStop(const string& stop_name) const;
+		const Bus* FindBus(const std::string_view& bus_name) const;
+		const Stop* FindStop(const std::string_view& stop_name) const;
 		
 		// Bus X: R stops on route, U unique stops, L route length 
-		const optional<StatBus> GetInfoBus(const string& bus_name) const;
+		const std::optional<StatBus> GetInfoBus(const std::string_view& bus_name) const;
 
 		// Stop X: buses bus1 bus2 ... busN 
-		const set<string>* GetInfoStop(const string& stop_name) const;
+		const std::set<std::string>* GetInfoStop(const std::string_view& stop_name) const;
 
 	private:
 		//  дек остановок
-		deque<Stop> stops_;
+		std::deque<Stop> stops_;
 		// хеш таблица для быстрого поиска остановки по имени 
-		unordered_map<string, const Stop*> stopname_to_stops_;
+		std::unordered_map<std::string, const Stop*> stopname_to_stops_;
 
 		// дек маршрутов	
-		deque<Bus> buses_; 
+		std::deque<Bus> buses_; 
 		// хеш таблица для быстрого поиска маршрута по имени
-		unordered_map<string, const Bus*> busname_to_bus_;
+		std::unordered_map<std::string, const Bus*> busname_to_bus_;
 
-		unordered_map<string, set<string>> stop_to_buses_;
+		std::unordered_map<std::string, std::set<std::string>> stop_to_buses_;
 	};
 }

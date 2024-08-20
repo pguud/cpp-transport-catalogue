@@ -2,6 +2,8 @@
 
 #include "transport_catalogue.h"
 
+using namespace std;
+
 namespace TransportCatalogue {
     void TransportCatalogue::AddBus(const Bus& bus) {
         buses_.push_back(bus);
@@ -19,24 +21,24 @@ namespace TransportCatalogue {
         stop_to_buses_[stop.name];
     }
 
-    const Bus* TransportCatalogue::FindBus(const string& bus_name) const {
-        auto find_bus = busname_to_bus_.find(bus_name);
+    const Bus* TransportCatalogue::FindBus(const string_view& bus_name) const {
+        auto find_bus = busname_to_bus_.find(bus_name.data());
         return find_bus == busname_to_bus_.end() ? nullptr : find_bus->second;
     }
 
-    const Stop* TransportCatalogue::FindStop(const string& stop_name) const {
-        auto find_stop = stopname_to_stops_.find(stop_name);
+    const Stop* TransportCatalogue::FindStop(const string_view& stop_name) const {
+        auto find_stop = stopname_to_stops_.find(stop_name.data());
         return find_stop == stopname_to_stops_.end() ? nullptr : find_stop->second;
     }
 
     // Bus X: R stops on route, U unique stops, L route length 
-    const optional<StatBus> TransportCatalogue::GetInfoBus(const string& bus_name) const {
-        if (!busname_to_bus_.count(bus_name)) {
+    const optional<StatBus> TransportCatalogue::GetInfoBus(const string_view& bus_name) const {
+        if (!busname_to_bus_.count(bus_name.data())) {
             return nullopt;
         }
 
         StatBus stat;
-        auto bus = busname_to_bus_.at(bus_name);
+        auto bus = busname_to_bus_.at(bus_name.data());
         stat.stops_on_route = bus->bus.size();
         unordered_set<const Stop*> unique_stops;
         bool first = true;
@@ -54,14 +56,8 @@ namespace TransportCatalogue {
     }
 
     // Stop X: buses bus1 bus2 ... busN 
-    const set<string>* TransportCatalogue::GetInfoStop(const string& stop_name) const {
-        /*
-        if (!stop_to_buses_.count(stop_name)) {
-            return nullopt;
-        }
-        return &stop_to_buses_.at(stop_name);
-        */
-       auto info_stop = stop_to_buses_.find(stop_name);
+    const set<string>* TransportCatalogue::GetInfoStop(const string_view& stop_name) const {
+       auto info_stop = stop_to_buses_.find(stop_name.data());
        return info_stop == stop_to_buses_.end() ? nullptr : &info_stop->second;
     }
 }

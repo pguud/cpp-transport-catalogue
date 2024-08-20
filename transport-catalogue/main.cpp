@@ -13,6 +13,6 @@ int main() {
     ParseBaseRequest(catalogue, cin);
 
 // ParseRequest
-    ParseRequest(catalogue, cin);
+    ParseRequest(catalogue, cin, cout);
     
 }

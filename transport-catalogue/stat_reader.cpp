@@ -2,16 +2,16 @@
 
 #include "stat_reader.h"
 
-void ParseRequest(TransportCatalogue::TransportCatalogue& catalogue, std::istream& input) {
+using namespace std;
+
+void ParseRequest(TransportCatalogue::TransportCatalogue& catalogue, std::istream& input, std::ostream& output) {
 	int stat_request_count;
-    // cin >> stat_request_count >> ws;
     input >> stat_request_count >> ws;
 
     for (int i = 0; i < stat_request_count; ++i) {
         string line;
-        // getline(cin, line);
         getline(input, line);
-        ParseAndPrintStat(catalogue, line, cout);
+        ParseAndPrintStat(catalogue, line, output);
     }
 }
 
@@ -22,8 +22,9 @@ void ParseAndPrintStat(const TransportCatalogue::TransportCatalogue& tansport_ca
 	string_view id = request.substr(request.find(' ') + 1, request.size());
 	
 	if (command == "Bus"s) {
-		if (tansport_catalogue.GetInfoBus(string(id)).has_value()) {
-			const TransportCatalogue::StatBus s = tansport_catalogue.GetInfoBus(string(id)).value();
+		auto stat_bus = tansport_catalogue.GetInfoBus(string(id));
+		if (stat_bus.has_value()) {
+			const TransportCatalogue::StatBus s = stat_bus.value();
 			output << command << " "s << id << ": "s << s.stops_on_route << " stops on route, "s << s.unique_stops << " unique stops, "s
 			<< s.route_length << " route length"s << endl;
 		} else {
@@ -33,10 +34,10 @@ void ParseAndPrintStat(const TransportCatalogue::TransportCatalogue& tansport_ca
 		output << command << " "s << id << ": "s;
 
 		if (tansport_catalogue.GetInfoStop(string(id)) != nullptr) {
-			set<string> StatStop = *tansport_catalogue.GetInfoStop(string(id));
-			if (!StatStop.empty()) {
+			const set<string>& stat_stop = *tansport_catalogue.GetInfoStop(string(id));
+			if (!stat_stop.empty()) {
 				output << "buses"s;
-				for (const string& s : StatStop) {
+				for (const string& s : stat_stop) {
 					output << " "s << s; 
 				}
 				output << endl;
