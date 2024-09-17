@@ -32,6 +32,10 @@ namespace TransportCatalogue {
     }
 
     // Bus X: R stops on route, U unique stops, L route length 
+    // ИЗМЕНЕНО на : 
+    // Bus X: R stops on route, U unique stops, L route length, C curvature
+    // L - дорожное расстояние
+    // С — извилистость, то есть отношение фактической длины маршрута к географическому расстоянию.
     const optional<StatBus> TransportCatalogue::GetInfoBus(const string_view& bus_name) const {
         if (!busname_to_bus_.count(bus_name.data())) {
             return nullopt;
@@ -43,15 +47,20 @@ namespace TransportCatalogue {
         unordered_set<const Stop*> unique_stops;
         bool first = true;
 
+        double geographic_distance = 0;
         for (size_t i = 0; i < bus->bus.size(); ++i) {
             unique_stops.insert(bus->bus[i]);
             if (!first) {
-                stat.route_length += ComputeDistance(bus->bus[i-1]->coordinates, bus->bus[i]->coordinates);
+                geographic_distance += ComputeDistance(bus->bus[i-1]->coordinates, bus->bus[i]->coordinates);
+                stat.route_length += GetDistanceBetweenStops(bus->bus[i-1], bus->bus[i]);
             }
             first = false;
         }
 
         stat.unique_stops = unique_stops.size();
+
+        stat.curvature = stat.route_length / geographic_distance;
+
         return stat;
     }
 
@@ -60,5 +69,23 @@ namespace TransportCatalogue {
        auto info_stop = stop_to_buses_.find(stop_name.data());
        return info_stop == stop_to_buses_.end() ? nullptr : &info_stop->second;
     }
-}
 
+    // задание дистанции между остановками.
+    void TransportCatalogue::SetDistanceBetweenStops(const std::string_view& first_stop_name, 
+                                const std::string_view& second_stop_name, double dist) {
+        const Stop* first_stop = FindStop(first_stop_name);
+        const Stop* second_stop = FindStop(second_stop_name);
+
+        distance_between_stops_[{first_stop, second_stop}] = dist;
+    }
+
+    // получение дистанции между остановками.
+    double TransportCatalogue::GetDistanceBetweenStops(const Stop* stop1, const Stop* stop2) const {
+
+        if (distance_between_stops_.find({stop1, stop2}) != distance_between_stops_.end()) {
+            return distance_between_stops_.at({stop1, stop2});
+        }
+
+        return distance_between_stops_.at({stop2, stop1});
+    }
+}

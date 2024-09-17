@@ -105,8 +105,56 @@ void InputReader::ParseLine(std::string_view line) {
     }
 }
 
-void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue::TransportCatalogue& catalogue) const {
-    // Реализуйте метод самостоятельно
+std::vector<std::pair<std::string, double>> ParseDistance(std::string str) {
+    std::vector<std::pair<std::string, double>> distance;
+
+    // Удаляем начало строки до первого ":"
+    size_t pos = str.find(':');
+    if (pos != std::string::npos) {
+        str = str.substr(pos + 1); 
+    }
+    // Удаляем координаты
+    pos = str.find(',');
+    if (pos != std::string::npos) {
+        str = str.substr(pos + 1);
+    }
+    pos = str.find(',');
+    if (pos != std::string::npos) {
+        str = str.substr(pos + 1);
+    }
+
+    str = Trim(str).data();
+
+    // Разделяем строку на части по "to"
+    size_t toPos = str.find("m to ");
+
+    while (toPos != std::string::npos) {
+        std::string dist = str.substr(0, toPos);
+        str = str.substr(toPos + 5); // Удаляем "to "
+
+        // Извлекаем название местоположения
+        size_t commaPos = str.find(',');
+        string stop;
+        if (commaPos != std::string::npos) {
+            stop = str.substr(0, commaPos);
+            str = str.substr(commaPos + 1);
+            str = Trim(str).data();
+        } else {
+            stop = str;
+            str = ""s;
+        }
+
+        // Добавляем пару в вектор
+        distance.emplace_back(stop, stoi(dist));
+
+        toPos = str.find("m to ");
+    }
+
+    return distance;
+}
+
+void InputReader::ApplyCommands(TransportCatalogue::TransportCatalogue& catalogue) const {
+    // Stop X: latitude, longitude, D1m to stop1, D2m to stop2, ...
     for (const CommandDescription& cd : commands_) {
         if (cd.command == "Stop"s) {
             TransportCatalogue::Stop stop;
@@ -119,10 +167,19 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue::TransportCa
     }
 
     for (const CommandDescription& cd : commands_) {
+
+        if (cd.command == "Stop"s) {
+            std::vector<std::pair<std::string, double>> dist = ParseDistance(cd.description);
+            for (size_t i = 0; i < dist.size(); ++i) {
+                catalogue.SetDistanceBetweenStops(cd.id, dist[i].first, dist[i].second);
+            }
+        }
+
         if (cd.command == "Bus"s) {
             TransportCatalogue::Bus bus;
             bus.name = cd.id;
-            vector<string_view> route = move(ParseRoute(cd.description));
+            // vector<string_view> route = move(ParseRoute(cd.description));
+            vector<string_view> route = ParseRoute(cd.description);
 
             vector<const TransportCatalogue::Stop*> stops;
             for (const string_view s : route) {
@@ -136,13 +193,11 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue::TransportCa
 
 void ParseBaseRequest(TransportCatalogue::TransportCatalogue& catalogue, std::istream& input) {
     int base_request_count;
-    // cin >> base_request_count >> ws;
     input >> base_request_count >> std::ws;
 
     InputReader reader;
     for (int i = 0; i < base_request_count; ++i) {
         string line;
-        // getline(cin, line);
         getline(input, line);
         reader.ParseLine(line);
     }
