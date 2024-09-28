@@ -8,23 +8,27 @@
 #include <set>
 
 #include "geo.h"
+#include "json.h"
+
+#include <map>
 
 namespace TransportCatalogue {
 	struct Stop {
 		std::string name;
-		Coordinates coordinates;
+		geo::Coordinates coordinates;
 	};
 
 	struct Bus {
 		std::string name;
 		// вектор остановок
 		std::vector<const Stop*> bus;
+		bool is_roundtrip;
 	};
 
 	// Bus X: R stops on route, U unique stops, L route length, C curvature
 	struct StatBus {
-		size_t stops_on_route = 0;
-		size_t unique_stops = 0;
+		int stops_on_route = 0;
+		int unique_stops = 0;
 		double route_length = 0;
 		double curvature = 0;
 	};
@@ -51,6 +55,31 @@ namespace TransportCatalogue {
 		
 		// получение дистанции между остановками.
 		double GetDistanceBetweenStops(const Stop* stop1, const Stop* stop2) const;
+
+		std::map<std::string, geo::Coordinates> GetSetStops() const {
+			std::map<std::string, geo::Coordinates> set_stops;
+			for (const Stop& stop: stops_) {
+				if (!stop_to_buses_.at(stop.name).empty()) {
+					set_stops[stop.name] = stop.coordinates;
+				}
+			}
+			return set_stops;
+		}
+
+		std::map<std::string, std::vector<geo::Coordinates>> GetCoordinatesAllBuses() const {
+			std::map<std::string, std::vector<geo::Coordinates>> coordinate_all_buses;
+			
+			for (const auto& bus : buses_) {
+				// auto stat = GetInfoBus(bus.name);
+				std::vector<geo::Coordinates> coordinate_buse; 
+
+				for (const Stop* stop : bus.bus) {
+					coordinate_buse.push_back(stop->coordinates);
+				}
+				coordinate_all_buses[bus.name] = coordinate_buse;
+			}
+			return coordinate_all_buses;
+		}
 
 	private:
 		//  дек остановок

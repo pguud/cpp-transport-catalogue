@@ -4,13 +4,14 @@
 #include <cassert>
 #include <iterator>
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 
 /**
  * Парсит строку вида "10.123,  -30.1837" и возвращает пару координат (широта, долгота)
  */
-Coordinates ParseCoordinates(std::string_view str) {
+geo::Coordinates ParseCoordinates(std::string_view str) {
     static const double nan = std::nan("");
 
     auto not_space = str.find_first_not_of(' ');
@@ -159,7 +160,7 @@ void InputReader::ApplyCommands(TransportCatalogue::TransportCatalogue& catalogu
         if (cd.command == "Stop"s) {
             TransportCatalogue::Stop stop;
             stop.name = cd.id;
-            Coordinates coordinates = ParseCoordinates(cd.description);
+            geo::Coordinates coordinates = ParseCoordinates(cd.description);
             stop.coordinates = move(coordinates);
 
             catalogue.AddStop(stop);
