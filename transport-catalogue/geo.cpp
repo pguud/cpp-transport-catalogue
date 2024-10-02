@@ -22,11 +22,11 @@ double ComputeDistance(Coordinates from, Coordinates to) {
     }
     
     static const double dr = 3.1415926535 / 180.;
-    const int radius_of_the_Earth = 6371000;
+    const int radius_of_the_earth = 6371000;
     
     return acos(sin(from.lat * dr) * sin(to.lat * dr)
                 + cos(from.lat * dr) * cos(to.lat * dr) * cos(abs(from.lng - to.lng) * dr))
-        * radius_of_the_Earth;
+        * radius_of_the_earth;
 }
 
 }  // namespace geo

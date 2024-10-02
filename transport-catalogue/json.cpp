@@ -129,7 +129,7 @@ namespace json {
                 }
                     input.putback(c);
 
-                return Node(nullptr); // Correctly handle null
+                return Node(nullptr);
 
             } else if (c == 't') { // true
                 string trueStr;
@@ -240,7 +240,7 @@ namespace json {
         if (IsArray()) {
             return std::get<Array>(value_);
         }
-        throw std::logic_error("Node does not hold an array value"); ///////////////////
+        throw std::logic_error("Node does not hold an array value"); 
     }
 
     const Dict& Node::AsMap() const {
@@ -325,9 +325,8 @@ namespace json {
     template <typename Value>
     void PrintValue(const Value& value, std::ostream& out) {
         std::stringstream stream;
-        stream << value; // number == 0.0818626
-        out << stream.str();   // "0.0818626"
-        // out << value;
+        stream << value;
+        out << stream.str();   
     }
 
     void PrintValue(std::nullptr_t, std::ostream& out) {

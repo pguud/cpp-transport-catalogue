@@ -179,7 +179,6 @@ void InputReader::ApplyCommands(TransportCatalogue::TransportCatalogue& catalogu
         if (cd.command == "Bus"s) {
             TransportCatalogue::Bus bus;
             bus.name = cd.id;
-            // vector<string_view> route = move(ParseRoute(cd.description));
             vector<string_view> route = ParseRoute(cd.description);
 
             vector<const TransportCatalogue::Stop*> stops;

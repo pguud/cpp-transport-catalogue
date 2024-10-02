@@ -70,7 +70,6 @@ namespace TransportCatalogue {
 			std::map<std::string, std::vector<geo::Coordinates>> coordinate_all_buses;
 			
 			for (const auto& bus : buses_) {
-				// auto stat = GetInfoBus(bus.name);
 				std::vector<geo::Coordinates> coordinate_buse; 
 
 				for (const Stop* stop : bus.bus) {

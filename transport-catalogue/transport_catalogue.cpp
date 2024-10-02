@@ -31,8 +31,6 @@ namespace TransportCatalogue {
         return find_stop == stopname_to_stops_.end() ? nullptr : find_stop->second;
     }
 
-    // Bus X: R stops on route, U unique stops, L route length 
-    // ИЗМЕНЕНО на : 
     // Bus X: R stops on route, U unique stops, L route length, C curvature
     // L - дорожное расстояние
     // С — извилистость, то есть отношение фактической длины маршрута к географическому расстоянию.
@@ -83,43 +81,8 @@ namespace TransportCatalogue {
     double TransportCatalogue::GetDistanceBetweenStops(const Stop* stop1, const Stop* stop2) const {
 
         if (distance_between_stops_.find({stop1, stop2}) != distance_between_stops_.end()) {
-            // cout << distance_between_stops_.at({stop1, stop2}) << endl; 
             return distance_between_stops_.at({stop1, stop2});
         }
-        // cout << distance_between_stops_.at({stop2, stop1}) << endl; 
         return distance_between_stops_.at({stop2, stop1});
     }    
 }
-
-/*
-{ "base_requests": 
-    [{"type": "Stop",
-     "name": "A", 
-     "latitude": 55.611087, 
-     "longitude": 37.20829, 
-     "road_distances": {"B": 4000}}, 
-     
-     {"type": "Stop", 
-     "name": "B", 
-     "latitude": 55.595884, 
-     "longitude": 37.209755, 
-     "road_distances": {"A": 4500, "C": 9050}}, 
-     
-     {"type": "Stop", 
-     "name": "C", 
-     "latitude": 55.632761, 
-     "longitude": 37.333324, 
-     "road_distances": {"B": 9300}}, 
-     
-     {"type": "Bus", 
-     "name": "ABC", 
-     "stops": ["A", "B", "C"], 
-     "is_roundtrip": false}], 
-
-"stat_requests": 
-    [{"id": 1494837912, "type": "Bus", "name": "ABC"}]}
-*/
-
-// a b c a b
-// a b    b a    c b     b a
-// 4000 + 9050 + 9300 + 4500

@@ -1,60 +1,49 @@
 #pragma once
 
 #include "svg.h"
-#include "json.h"
-#include "geo.h"
+
 #include "transport_catalogue.h"
 
 #include <string>
-#include  <sstream>
+#include <sstream>
 #include <algorithm>
+#include <vector>
 
-
-// #include <iostream>
 
 /*
  * В этом файле вы можете разместить код, отвечающий за визуализацию карты маршрутов в формате SVG.
  * Визуализация маршртутов вам понадобится во второй части итогового проекта.
  * Пока можете оставить файл пустым.
  */
+   
+
 
 
 struct RenderSettings {
 public:
-    double width_;
-    double height_;
+    double width_ = 0;
+    double height_ = 0;
 
-    double padding_;
+    double padding_ = 0;
 
-    double line_width_;
-    double stop_radius_;
+    double line_width_ = 0;
+    double stop_radius_ = 0;
 
-    int bus_label_font_size_;
+    int bus_label_font_size_ = 0;
 
-    int stop_label_font_size_;
+    int stop_label_font_size_ = 0;
 
-    double underlayer_width_;
+    double underlayer_width_ = 0;
 
-    
-    std::string GetColor() const;
-    std::string GetColorText() const;
-    std::vector<double> GetBusLabelOffset() const;
-    std::string GetUnderlayerColor() const;
-    std::vector<double> GetStopLabelOffset() const;
+    std::vector<double> bus_label_offset_;  
 
-private:
-    json::Array bus_label_offset_;  
+    std::vector<double> stop_label_offset_; 
 
-    json::Array stop_label_offset_;
+    std::string underlayer_color_; 
 
-    json::Node underlayer_color_;
-
-    json::Array color_palette_;
-
-    friend void SetRenderSettings(RenderSettings& render, const json::Document& doc);
+    std::vector<std::string> color_palette_; 
 };
 
-void SetRenderSettings(RenderSettings& render, const json::Document& doc);
 
 bool IsZero(double value);
 
@@ -127,26 +116,29 @@ public:
                 std::vector<int> count_stops_in_bus, std::map<std::string, std::vector<geo::Coordinates>> coordinates_of_buses, 
                 const TransportCatalogue::TransportCatalogue& catalogue);
 
-    /*
-    void Test() const {
-        for (const auto &geo_coord: geo_coords_) {
-            using namespace std;
-
-        SphereProjector proj{geo_coords_.begin(), geo_coords_.end(), render_settings_.width_, render_settings_.height_, render_settings_.padding_};
-
-            const svg::Point screen_coord = proj(geo_coord);
-            std::cout << '(' << geo_coord.lat << ", "sv << geo_coord.lng << ") -> "sv;
-            std::cout << '(' << screen_coord.x << ", "sv << screen_coord.y << ')' << std::endl;
-        }
-    }
-    */
-
-    void DrawLine(svg::ObjectContainer& container) const;
     void Draw(svg::ObjectContainer& container) const override;
 
+    void Test() const {
+        for (const std::string& color : render_settings_.color_palette_) {
+            std::cout << color << std::endl;
+        }
+    }
+
 private:
+    void DrawLine(svg::ObjectContainer& container) const;
+    void DrawBusName(svg::ObjectContainer& container) const;
+    void DrawStopsCircle(svg::ObjectContainer& container) const;
+    void DrawStopsName(svg::ObjectContainer& container) const;
+
+
+    std::string GetColor() const;
+    std::string GetColorText() const;
+
+
     std::vector<geo::Coordinates> geo_coords_;
+
     RenderSettings render_settings_;
+
     // Создаём проектор сферических координат на карту
     SphereProjector proj_;
 
@@ -170,5 +162,4 @@ void DrawPicture(const Container& container, svg::ObjectContainer& target) {
     DrawPicture(begin(container), end(container), target);
 }
 
-//void DrawMap(const TransportCatalogue::TransportCatalogue& catalogue, const RenderSettings& render_settings);
 void DrawMap(const TransportCatalogue::TransportCatalogue& catalogue, const RenderSettings& render_settings, std::ostringstream& ostream);

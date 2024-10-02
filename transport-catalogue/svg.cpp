@@ -103,8 +103,6 @@ void Text::RenderObject(const RenderContext& context) const {
     if (!font_family_.empty()) out << " font-family=\""sv << font_family_ << "\" "sv;
     if (!font_weight_.empty()) out << "font-weight=\""sv << font_weight_ << "\""sv;
 
-    // RenderAttrs(out);
-
     out << ">"sv << data_ << "</text>"sv;
 }
 
