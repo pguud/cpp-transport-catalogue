@@ -1,5 +1,7 @@
 #include "json_reader.h"
 
+#include "json_builder.h"
+
 //#include <sstream>
 
 using namespace std::literals;
@@ -18,14 +20,14 @@ using namespace std::literals;
         
         const json::Node& root = json_document_.GetRoot(); 
 
-        if (root.IsMap()) { 
+        if (root.IsDict()) { 
 
-            const json::Dict& dict = root.AsMap(); 
+            const json::Dict& dict = root.AsDict(); 
             for (const auto& [key, value] : dict) { 
                 if (key == "render_settings") { 
-                    if (value.IsMap()) { 
+                    if (value.IsDict()) { 
 
-                        const json::Dict& baseRequests = value.AsMap(); 
+                        const json::Dict& baseRequests = value.AsDict(); 
 
                         render_settings_.width_ = baseRequests.at("width").AsDouble();
                             
@@ -114,60 +116,99 @@ using namespace std::literals;
         SetBus();
     }
 
-    json::Document JSONReader::GetStatRequests() const {
+   json::Document JSONReader::GetStatRequests() const {
         using namespace std::literals;
-        json::Array statReq; 
+
+        json::Builder json_builder;
+        json_builder.StartArray();
         const json::Node& root = json_document_.GetRoot(); 
-
  
-
-        if (root.IsMap()) { 
-            const json::Dict& dict = root.AsMap(); 
+        if (root.IsDict()) { 
+            const json::Dict& dict = root.AsDict(); 
 
             for (const auto& [key, value] : dict) { 
                 if (key == "stat_requests") { 
                     if (value.IsArray()) { 
                         const json::Array& statRequests = value.AsArray(); 
                         for (const auto& request : statRequests) { 
-                            if (request.IsMap()) { 
-                                const json::Dict& requestDict = request.AsMap(); 
+                            if (request.IsDict()) { 
+                                const json::Dict& requestDict = request.AsDict(); 
                                 int id = requestDict.at("id").AsInt(); 
                                 std::string type = requestDict.at("type").AsString(); 
 
                                 if (type == "Map") {
-                                    statReq.push_back(json::Node{GetMap(id)}); 
+                                    json_builder.StartDict().Key("request_id").Value(id);
+
+                                    std::ostringstream ostream;
+                                    DrawMap(catalogue_, GetRenderSettings(), ostream);
+
+                                    json_builder.Key("map").Value(ostream.str()).EndDict();
 
                                 } else if (type == "Bus") { 
                                     std::string name = requestDict.at("name").AsString(); 
-                                    statReq.push_back(json::Node{GetBusStat(id, name)}); 
+                                    json_builder.StartDict();
+                                    json_builder.Key("request_id").Value(id);
+
+                                    auto stat = catalogue_.GetInfoBus(name);
+                                    if (stat.has_value()) {
+                                        json_builder.Key("curvature").Value(stat.value().curvature);
+                                        json_builder.Key("route_length").Value(stat.value().route_length);
+                                        json_builder.Key("stop_count").Value(stat.value().stops_on_route);
+                                        json_builder.Key("unique_stop_count").Value(stat.value().unique_stops);
+                                    } else if (!stat.has_value()) {
+                                        json_builder.Key("error_message").Value("not found"s);
+
+                                    }
+
+                                    json_builder.EndDict();
 
                                 } else if (type == "Stop") { 
                                     std::string name = requestDict.at("name").AsString(); 
-                                    statReq.push_back(json::Node(GetStopStat(id, name))); 
+                                    json_builder.StartDict();
+                                    json_builder.Key("request_id").Value(id);
+
+                                    auto stat = catalogue_.GetInfoStop(name);
+                                    if (stat != nullptr) {
+                                        json_builder.Key("buses");
+                                        json_builder.StartArray();
+                                        
+                                        for (const auto& s : *stat) {
+                                            json_builder.Value(s);
+                                        
+                                        }
+                                        json_builder.EndArray();
+                                        
+                                    } else {
+                                        json_builder.Key("error_message").Value("not found"s);
+
+                                    }                                
+                                    
+                                    json_builder.EndDict();
                                 } 
                             } 
                         } 
                     } 
                 } 
             } 
-        }             
-        return json::Document{json::Node(statReq)}; 
+        }
+        json_builder.EndArray();
+        return json::Document{json_builder.Build()}; 
     }
 
     void JSONReader::SetStops() {
 
         const json::Node& root = json_document_.GetRoot();
 
-        if (root.IsMap()) {
-            const json::Dict& dict = root.AsMap();
+        if (root.IsDict()) {
+            const json::Dict& dict = root.AsDict();
 
             for (const auto& [key, value] : dict) {
                 if (key == "base_requests") {
                     if (value.IsArray()) {
                         const json::Array& baseRequests = value.AsArray();
                         for (const auto& request : baseRequests) {
-                            if (request.IsMap()) {
-                                const json::Dict& requestDict = request.AsMap();
+                            if (request.IsDict()) {
+                                const json::Dict& requestDict = request.AsDict();
                                 std::string type = requestDict.at("type").AsString();
 
                                 if (type == "Stop") {
@@ -192,8 +233,8 @@ using namespace std::literals;
     void JSONReader::SetDistanceBetweenStops() {
         const json::Node& root = json_document_.GetRoot();
 
-        if (root.IsMap()) {
-            const json::Dict& dict = root.AsMap();
+        if (root.IsDict()) {
+            const json::Dict& dict = root.AsDict();
 
             for (const auto& [key, value] : dict) {
                 if (key == "base_requests") {
@@ -201,13 +242,13 @@ using namespace std::literals;
                         const json::Array& baseRequests = value.AsArray();
 
                         for (const auto& request : baseRequests) {
-                            if (request.IsMap()) {
-                                const json::Dict& requestDict = request.AsMap();
+                            if (request.IsDict()) {
+                                const json::Dict& requestDict = request.AsDict();
                                 std::string type = requestDict.at("type").AsString();
 
                                 if (type == "Stop") {
                                     std::string name = requestDict.at("name").AsString();
-                                    const json::Dict& roadDistances = requestDict.at("road_distances").AsMap();
+                                    const json::Dict& roadDistances = requestDict.at("road_distances").AsDict();
 
                                     for (const auto& [road, distance] : roadDistances) {
                                         catalogue_.SetDistanceBetweenStops(name, road, distance.AsDouble());
@@ -225,8 +266,8 @@ using namespace std::literals;
 
         const json::Node& root = json_document_.GetRoot();
 
-        if (root.IsMap()) {
-            const json::Dict& dict = root.AsMap();
+        if (root.IsDict()) {
+            const json::Dict& dict = root.AsDict();
 
             for (const auto& [key, value] : dict) {
                 if (key == "base_requests") {
@@ -234,8 +275,8 @@ using namespace std::literals;
                         const json::Array& baseRequests = value.AsArray();
 
                         for (const auto& request : baseRequests) {
-                            if (request.IsMap()) {
-                                const json::Dict& requestDict = request.AsMap();
+                            if (request.IsDict()) {
+                                const json::Dict& requestDict = request.AsDict();
                                 std::string type = requestDict.at("type").AsString();
                                 if (type == "Bus") {
                                     std::string name = requestDict.at("name").AsString();
@@ -278,58 +319,4 @@ using namespace std::literals;
                 }
             }
         }
-    }
-
-    json::Dict JSONReader::GetStopStat(int id, const std::string& name) const {
-        json::Dict req;
-
-        auto stat = catalogue_.GetInfoStop(name);
-        req["request_id"] = json::Node(id);
-
-        if (stat != nullptr) {
-            json::Array buses;
-            for (const auto& s : *stat) {
-                buses.push_back(s);
-            }
-            if (buses.size() > 0) {
-                req["buses"] = buses;
-            } else {
-
-                req["buses"] = json::Node{json::Array{}};
-            }
-        } else {
-            req["error_message"] = json::Node{"not found"s};
-        }                                
-        
-        return req;
-    }
-
-    json::Dict JSONReader::GetBusStat(int id, const std::string& name) const {
-        json::Dict req;
-
-        auto stat = catalogue_.GetInfoBus(name);
-
-        req["request_id"] = json::Node(id);
-        if (stat.has_value()) {
-            req["curvature"] = json::Node{stat.value().curvature};
-            req["route_length"] = json::Node{stat.value().route_length};
-            req["stop_count"] = json::Node{stat.value().stops_on_route};
-            req["unique_stop_count"] = json::Node{stat.value().unique_stops};
-        } else if (!stat.has_value()) {
-            req["error_message"] = json::Node{"not found"s};
-        }
-        
-        return req;
-    }
-    
-    json::Dict JSONReader::GetMap(int id) const {
-        json::Dict req;
-        req["request_id"] = json::Node(id);
-
-        std::ostringstream ostream;
-        DrawMap(catalogue_, GetRenderSettings(), ostream); 
-
-        req["map"] = json::Node(ostream.str()); 
-                
-        return req;
     }

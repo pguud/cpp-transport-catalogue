@@ -22,9 +22,5 @@ private:
     void SetDistanceBetweenStops();
     void SetBus();
 
-    json::Dict GetStopStat(int id, const std::string& name) const;
-    json::Dict GetBusStat(int id, const std::string& name) const;    
-    json::Dict GetMap(int id) const;
-
     std::string ColorToString(json::Node color) const;
 };
