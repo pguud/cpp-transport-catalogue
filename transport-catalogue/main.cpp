@@ -8,7 +8,8 @@ int main() {
     JSONReader read{catalogue};
     
     read.ReadBaseRequests();
-    json::Document doc = read.GetStatRequests();
 
+    json::Document doc = read.GetStatRequests();
+    
     json::Print(doc, std::cout);
 }

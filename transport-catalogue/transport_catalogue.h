@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include <vector>
 #include <optional>
@@ -11,6 +12,9 @@
 #include "json.h"
 
 #include <map>
+
+#include <algorithm>
+#include <cassert>
 
 namespace TransportCatalogue {
 	struct Stop {
@@ -80,6 +84,63 @@ namespace TransportCatalogue {
 			return coordinate_all_buses;
 		}
 
+		/////////////////////////////////////////////////////////////////
+		std::vector<const Stop*> GetActualStops() const {
+			std::vector<const Stop*> result;
+
+			for (const auto& [stop, buses]: stop_to_buses_) {
+				if (!buses.empty() && (stopname_to_stops_.find(stop) != stopname_to_stops_.end())) {
+					result.push_back(stopname_to_stops_.at(stop));
+
+				}
+			}
+
+			std::sort(result.begin(), result.end(),
+					[](const Stop* lhs, const Stop* rhs) {
+						return lhs->name < rhs->name;
+					}
+			);
+
+			
+
+			return result;
+		}
+
+		std::vector<const Bus*> GetActualBuses() const {
+			std::vector<const Bus*> result;
+
+			for (const auto& [_, bus]: busname_to_bus_) {
+				if (!bus->bus.empty()) {
+					result.emplace_back(bus);
+				}
+			}
+
+			std::sort(result.begin(), result.end(),
+					[](const Bus* lhs, const Bus* rhs) {
+						return lhs->name < rhs->name;
+					}
+			);
+
+			return result;
+		}
+
+		double GetDistance(const Stop* stop_a, const Stop* stop_b) const {
+			auto distance = distance_between_stops_.find(std::pair{stop_a, stop_b});
+			if (distance == distance_between_stops_.end()) {
+				distance = distance_between_stops_.find(std::pair{stop_b, stop_a});
+			}
+			assert(distance != distance_between_stops_.end());
+
+			return distance->second;
+		}
+
+		bool IsSingleStop(std::string_view name) const {
+			auto stop = stopname_to_stops_.find(std::string(name));
+			assert(stop != stopname_to_stops_.end());
+
+			return stop_to_buses_.at(std::string(name)).empty();
+		}
+
 	private:
 		//  дек остановок
 		std::deque<Stop> stops_;
@@ -92,6 +153,9 @@ namespace TransportCatalogue {
 		std::unordered_map<std::string, const Bus*> busname_to_bus_;
 
 		std::unordered_map<std::string, std::set<std::string>> stop_to_buses_;
+
+	    std::unordered_map<const Stop*, std::unordered_set<const Bus*>> crossroads_;
+
 
 		struct PairHash {
 			template <typename T1, typename T2>

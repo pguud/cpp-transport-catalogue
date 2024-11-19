@@ -2,10 +2,10 @@
 
 #include "json_builder.h"
 
-//#include <sstream>
-
 using namespace std::literals;
 #include <iostream>
+
+//#include "transport_router.h"
 /*
  * Здесь можно разместить код наполнения транспортного справочника данными из JSON,
  * а также код обработки запросов к базе и формирование массива ответов в формате JSON
@@ -114,6 +114,9 @@ using namespace std::literals;
         SetStops();
         SetDistanceBetweenStops();
         SetBus();
+
+    // Во входной JSON добавляется ключ routing_settings, значение которого — словарь с двумя ключами
+        SetRoutingSettings();
     }
 
    json::Document JSONReader::GetStatRequests() const {
@@ -184,7 +187,58 @@ using namespace std::literals;
                                     }                                
                                     
                                     json_builder.EndDict();
-                                } 
+                                } else if (type == "Route") {
+                                    ///////////////////////////////////////
+                                    std::string from = requestDict.at("from").AsString(); 
+                                    std::string to = requestDict.at("to").AsString(); 
+
+                                    Router router{catalogue_, routing_settings_};
+                                    std::optional<RouteInfo> stat = router.GetRouteInfo(from, to); 
+                                    if (stat.has_value()) {
+
+                                    
+                                        json::Array items;
+
+                                        for (const auto* passage: stat.value().passages) {
+                                            items.emplace_back(
+                                                json::Builder{}
+                                                    .StartDict()
+                                                    .Key("type"s).Value("Wait"s)
+                                                    .Key("stop_name").Value(std::string(passage->start))
+                                                    .Key("time"s).Value(passage->wait_time)
+                                                    .EndDict()
+                                                    .Build().AsDict()
+
+                                            );
+
+
+                                            items.emplace_back(
+                                                json::Builder{}
+                                                    .StartDict()
+                                                    .Key("type"s).Value("Bus"s)
+                                                    .Key("bus").Value(std::string(passage->bus))
+                                                    .Key("span_count"s).Value(passage->span_count)
+                                                    .Key("time"s).Value(passage->total_time - passage->wait_time)
+                                                    .EndDict()
+                                                    .Build().AsDict()
+                                            );
+                                        }
+
+                                        
+                                            json_builder.StartDict()
+                                            .Key("total_time"s).Value(stat.value().total_time)
+                                            .Key("items"s).Value(std::move(items))
+                                            .Key("request_id").Value(id)
+                                            .EndDict();
+
+
+                                    } else {
+                                        json_builder.StartDict()
+                                        .Key("error_message").Value("not found")
+                                        .Key("request_id").Value(id)
+                                        .EndDict();
+                                    }
+                                }
                             } 
                         } 
                     } 
@@ -319,4 +373,22 @@ using namespace std::literals;
                 }
             }
         }
+    }
+    
+    void JSONReader::SetRoutingSettings() {
+        const json::Node& root = json_document_.GetRoot();
+        if (root.IsDict()) {
+            const json::Dict& dict = root.AsDict();
+
+            for (const auto& [key, value] : dict) {
+                if (key == "routing_settings") {
+                    if (value.IsDict()) {
+                        const json::Dict& routingDict = value.AsDict();
+                        
+                        routing_settings_.wait_time = routingDict.at("bus_wait_time").AsInt();
+                        routing_settings_.velocity = routingDict.at("bus_velocity").AsInt();
+                    }
+                }
+            }
+        }   
     }
