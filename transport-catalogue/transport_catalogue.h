@@ -141,6 +141,24 @@ namespace TransportCatalogue {
 			return stop_to_buses_.at(std::string(name)).empty();
 		}
 
+		    const std::vector<const Stop*>& GetAllStops() const {
+				static std::vector<const Stop*> stops;
+				stops.clear();
+				for (const auto& stop : stops_) {
+					stops.push_back(&stop);
+				}
+				return stops;
+				}
+
+				const std::vector<const Bus*>& GetAllBuses() const {
+				static std::vector<const Bus*> buses;
+				buses.clear();
+				for (const auto& bus : buses_) {
+					buses.push_back(&bus);
+				}
+				return buses;
+				}
+
 	private:
 		//  дек остановок
 		std::deque<Stop> stops_;

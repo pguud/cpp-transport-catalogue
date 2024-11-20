@@ -5,7 +5,6 @@
 using namespace std::literals;
 #include <iostream>
 
-//#include "transport_router.h"
 /*
  * Здесь можно разместить код наполнения транспортного справочника данными из JSON,
  * а также код обработки запросов к базе и формирование массива ответов в формате JSON
@@ -192,52 +191,48 @@ using namespace std::literals;
                                     std::string from = requestDict.at("from").AsString(); 
                                     std::string to = requestDict.at("to").AsString(); 
 
-                                    Router router{catalogue_, routing_settings_};
-                                    std::optional<RouteInfo> stat = router.GetRouteInfo(from, to); 
-                                    if (stat.has_value()) {
-
+                                    TransportRouter router{catalogue_, routing_settings_};
                                     
                                         json::Array items;
+                                        //json::Dict response;
 
-                                        for (const auto* passage: stat.value().passages) {
-                                            items.emplace_back(
-                                                json::Builder{}
-                                                    .StartDict()
-                                                    .Key("type"s).Value("Wait"s)
-                                                    .Key("stop_name").Value(std::string(passage->start))
-                                                    .Key("time"s).Value(passage->wait_time)
-                                                    .EndDict()
-                                                    .Build().AsDict()
+                                        auto route_info = router.FindRoute(from, to);
 
-                                            );
+                                        if (!route_info) {
+                                            //response["error_message"] = json::Node(std::string("not found"));
 
+                                            json_builder.StartDict()
+                                            .Key("error_message").Value("not found")
+                                            .Key("request_id").Value(id)
+                                            .EndDict();
+                                        
+                                        } else {
+                                            json::Array items_array;
 
-                                            items.emplace_back(
-                                                json::Builder{}
-                                                    .StartDict()
-                                                    .Key("type"s).Value("Bus"s)
-                                                    .Key("bus").Value(std::string(passage->bus))
-                                                    .Key("span_count"s).Value(passage->span_count)
-                                                    .Key("time"s).Value(passage->total_time - passage->wait_time)
-                                                    .EndDict()
-                                                    .Build().AsDict()
-                                            );
+                                            for (const auto& item : route_info->items) {
+                                                json::Dict item_dict;
+                                                item_dict["type"] = item.type;
+
+                                                if (item.type == "Wait") {
+                                                    item_dict["stop_name"] = item.stop_name;
+                                                    item_dict["time"] = item.time;
+                                                }
+                                                else if (item.type == "Bus") {
+                                                    item_dict["bus"] = item.bus_name;
+                                                    item_dict["span_count"] = item.span_count;
+                                                    item_dict["time"] = item.time;
+                                                }
+
+                                                items_array.push_back(std::move(item_dict));
+                                            }
+                                            json_builder.StartDict()
+                                            .Key("items").Value(items_array)
+                                            .Key("request_id").Value(id)
+                                            .Key("total_time").Value(route_info->total_time)
+                                            .EndDict();
                                         }
 
                                         
-                                            json_builder.StartDict()
-                                            .Key("total_time"s).Value(stat.value().total_time)
-                                            .Key("items"s).Value(std::move(items))
-                                            .Key("request_id").Value(id)
-                                            .EndDict();
-
-
-                                    } else {
-                                        json_builder.StartDict()
-                                        .Key("error_message").Value("not found")
-                                        .Key("request_id").Value(id)
-                                        .EndDict();
-                                    }
                                 }
                             } 
                         } 
@@ -385,8 +380,8 @@ using namespace std::literals;
                     if (value.IsDict()) {
                         const json::Dict& routingDict = value.AsDict();
                         
-                        routing_settings_.wait_time = routingDict.at("bus_wait_time").AsInt();
-                        routing_settings_.velocity = routingDict.at("bus_velocity").AsInt();
+                        routing_settings_.bus_wait_time = routingDict.at("bus_wait_time").AsInt();
+                        routing_settings_.bus_velocity = routingDict.at("bus_velocity").AsInt();
                     }
                 }
             }

@@ -20,10 +20,7 @@ namespace TransportCatalogue {
 
         stop_to_buses_[stop.name];
 
-        //
         crossroads_.emplace(&stop, std::unordered_set<const Bus*>{});
-
-
     }
 
     const Bus* TransportCatalogue::FindBus(const string_view& bus_name) const {

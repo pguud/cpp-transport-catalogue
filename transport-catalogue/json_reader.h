@@ -19,8 +19,7 @@ public:
 private:
     TransportCatalogue::TransportCatalogue& catalogue_;
     json::Document json_document_;
-    //Router router_;
-    Settings routing_settings_;
+    RoutingSettings routing_settings_;
 
 
     void SetStops();
